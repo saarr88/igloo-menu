@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Igloo - QR Code for Menu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #FAF5EF;
+      color: #3D2B1F;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .setup-panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 2px 16px rgba(61,43,31,0.08);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .setup-panel h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .setup-panel p {
+      font-size: 0.85rem;
+      color: #6B5344;
+      margin-bottom: 1rem;
+    }
+
+    .setup-panel input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid #F0E8DC;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .setup-panel input:focus {
+      border-color: #D4764E;
+    }
+
+    .setup-panel button {
+      margin-top: 1rem;
+      background: #D4764E;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .setup-panel button:hover {
+      background: #C96B3C;
+    }
+
+    /* PRINTABLE QR CARD */
+    .qr-card {
+      width: 350px;
+      background: #fff;
+      border-radius: 20px;
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(61,43,31,0.1);
+      border: 3px solid #D4764E;
+      position: relative;
+      display: none;
+    }
+
+    .qr-card.show { display: block; }
+
+    .qr-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #D4764E, #E8956F, #C96B3C);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .qr-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #3D2B1F;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .qr-tagline {
+      font-size: 0.75rem;
+      color: #9C8578;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 0.15rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #qrCanvas {
+      margin: 0 auto;
+      display: block;
+    }
+
+    .qr-label {
+      margin-top: 1.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #D4764E;
+      letter-spacing: 1px;
+    }
+
+    .qr-sublabel {
+      font-size: 0.78rem;
+      color: #9C8578;
+      margin-top: 0.25rem;
+    }
+
+    .print-btn {
+      margin-top: 1.5rem;
+      background: #3D2B1F;
+      color: #FAF5EF;
+      border: none;
+      padding: 0.7rem 2.5rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+    }
+
+    .print-btn:hover { background: #6B5344; }
+
+    @media print {
+      body { background: #fff; }
+      .setup-panel, .print-btn { display: none !important; }
+      .qr-card {
+        display: block !important;
+        box-shadow: none;
+        border: 3px solid #D4764E;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="setup-panel" id="setupPanel">
+    <h2>Generate Menu QR Code</h2>
+    <p>Enter the URL where you hosted your Igloo menu page. The QR code will be generated for customers to scan.</p>
+    <input type="url" id="menuUrl" value="http://darling-gaufre-de10d7.netlify.app" placeholder="https://your-site.com/menu">
+    <br>
+    <button onclick="generateQR()">Generate QR Code</button>
+  </div>
+
+  <div class="qr-card" id="qrCard">
+    <div class="qr-brand">IGLOO</div>
+    <div class="qr-tagline">Chill. Eat. Repeat.</div>
+    <canvas id="qrCanvas"></canvas>
+    <div class="qr-label">Scan to View Menu</div>
+    <div class="qr-sublabel">Place your order with the server</div>
+    <br>
+    <button class="print-btn" onclick="window.print()">Print QR Code</button>
+  </div>
+
+  <!-- QR Code library (lightweight, no dependencies) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script>
+    function generateQR() {
+      const url = document.getElementById('menuUrl').value.trim();
+      if (!url) {
+        alert('Please enter a valid URL');
+        return;
+      }
+
+      const canvas = document.getElementById('qrCanvas');
+      QRCode.toCanvas(canvas, url, {
+        width: 220,
+        margin: 2,
+        color: {
+          dark: '#3D2B1F',
+          light: '#FFFFFF'
+        }
+      }, function (error) {
+        if (error) {
+          alert('Error generating QR code. Please check the URL.');
+          console.error(error);
+          return;
+        }
+        document.getElementById('qrCard').classList.add('show');
+      });
+    }
+  </script>
+
+</body>
+</html>
