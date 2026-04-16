@@ -169,7 +169,7 @@
   <div class="setup-panel" id="setupPanel">
     <h2>Generate Menu QR Code</h2>
     <p>Enter the URL where you hosted your Igloo menu page. The QR code will be generated for customers to scan.</p>
-    <input type="url" id="menuUrl" value="http://darling-gaufre-de10d7.netlify.app" placeholder="https://your-site.com/menu">
+    <input type="url" id="menuUrl" value="https://igloo-menu.vercel.app/" placeholder="https://your-site.com/menu">
     <br>
     <button onclick="generateQR()">Generate QR Code</button>
   </div>
@@ -184,13 +184,25 @@
     <button class="print-btn" onclick="window.print()">Print QR Code</button>
   </div>
 
-  <!-- QR Code library (lightweight, no dependencies) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <!-- QR Code library with fallback -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    if (typeof QRCode === 'undefined') {
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+      document.head.appendChild(s);
+    }
+  </script>
   <script>
     function generateQR() {
       const url = document.getElementById('menuUrl').value.trim();
       if (!url) {
         alert('Please enter a valid URL');
+        return;
+      }
+
+      if (typeof QRCode === 'undefined') {
+        alert('QR library failed to load. Please refresh the page and try again.');
         return;
       }
 
